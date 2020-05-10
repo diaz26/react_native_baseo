@@ -1,12 +1,18 @@
 import { GLOBAL } from "../general/global";
+import {AsyncStorage} from 'react-native';
 
-const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${GLOBAL.token}`
-};
+
 
 async function allProducts() {
-    return fetch(`${GLOBAL.url}productos`, { headers: headers })
+
+    const token = await AsyncStorage.getItem('token');
+
+    return fetch(`${GLOBAL.url}productos`, {
+            headers: new Headers({
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            })
+        })
         .then ( (res) => res.json() )
         .then( (data) => {
             return data.productos
@@ -17,18 +23,34 @@ async function allProducts() {
 }
 
 async function products() {
-    return fetch(`${GLOBAL.url}productos/my`, { headers: headers })
-        .then ( (res) => res.json() )
-        .then( (data) => {
+    const token = await AsyncStorage.getItem('token');
+
+    return fetch(`${GLOBAL.url}productos/my`, {
+            headers: new Headers({
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            })
+        })
+        .then((res) => res.json())
+        .then((data) => {
             return data.productos
         })
-        .catch( (err) => {
+        .catch((err) => {
             console.log(err)
         });
 }
 
 async function addProducto(data) {
-    return fetch(GLOBAL.url + 'productos', { headers: headers, method: 'POST', body: JSON.stringify(data) })
+    const token = await AsyncStorage.getItem('token');
+
+    return fetch(GLOBAL.url + 'productos', {
+        headers: new Headers({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }),
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
         .then ( (res) => res.json() )
         .then( (data) => {
             return data
@@ -39,7 +61,17 @@ async function addProducto(data) {
 }
 
 async function searchProduct(term) {
-    return fetch(GLOBAL.url + 'productos/search', { headers: headers, method: 'POST', body: JSON.stringify({term}) })
+    const token = await AsyncStorage.getItem('token');
+    return fetch(GLOBAL.url + 'productos/search', {
+        headers: new Headers({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }),
+        method: 'POST',
+        body: JSON.stringify({
+            term
+        })
+    })
         .then ( (res) => res.json() )
         .then( (data) => {
             return data.productos

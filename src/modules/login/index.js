@@ -1,38 +1,45 @@
 import React, { Component } from 'react';
-import { StyleSheet, View, Text} from 'react-native';
+import { StyleSheet, View, Text, ToastAndroid, Platform} from 'react-native';
 import { Button, Input, Icon, Image } from 'react-native-elements';
 import { login } from "./service";
-import ModalError from "../general/modalError";
+import BackgrounImageBaseo from "../general/backgrounImageBaseo";
+import ValidationComponent from 'react-native-form-validator';
+import {AsyncStorage} from 'react-native';
 
-export default class Login extends Component {
+
+export default class Login extends ValidationComponent {
     constructor(props) {
         super(props);
         this.state = {
-            respuesta: {},
-            openModal: false,
             usuario: '',
             contrasena: '',
-            validateUser: null,
-            validatePass: null
         }
     }
 
-    ingresar = async () => {
-        // this.props.navigation.navigate('Inicio')
-        await this.setState(() => ({ validateUser: (this.state.usuario === '') ? 'El campo es requerido' : null }));
-        await this.setState(() => ({ validatePass: (this.state.contrasena === '') ? 'El campo es requerido' : null }));
-        if (! this.state.validateUser && ! this.state.validatePass) {
+    async componentDidMount() {
+        let token = await AsyncStorage.getItem('token')
+        console.log(token)
+        if (token !== undefined && token !== null) {
+            this.props.navigation.push('Inicio')
+        }
+    }
+
+    async ingresar() {
+        await this.forceUpdate()
+        await this.validate({
+            usuario: { required: true},
+            contrasena: {required: true},
+        });
+
+        if (this.isFormValid()) {
             const data = {
                 email: this.state.usuario,
                 pass: this.state.contrasena
             }
             const resp = await login(data);
             if (resp.status == 'success') {
-                this.props.navigation.navigate('Inicio')
-            } else {
-                await this.setState({ respuesta: resp, openModal: true, contrasena: '' })
+                this.props.navigation.push('Inicio')
             }
-            
         }
     }
 
@@ -41,23 +48,13 @@ export default class Login extends Component {
     }
 
     render() {
-        if (this.state.openModal) {
-            return (
-                <ModalError msg={ this.state.respuesta.msg } closeModal={this.closeModal} />
-            );
-        }
         return (
             <View style={styles.content}>
-                <View style={{ alignItems: 'center' }}>
-                    <Image
-                        source={require('../../../assets/icon.png')}
-                        style={{ width: 70, height: 70 }}
-                    />
-                </View>
-
+                <BackgrounImageBaseo />
                 <Input
+                    ref = 'usuario'
                     value={this.state.usuario}
-                    placeholder='USUARIO'
+                    placeholder='Usuario / e-mail'
                     onChangeText={(usuario) => this.setState({ usuario })}
                     rightIcon={
                         <Icon
@@ -67,11 +64,10 @@ export default class Login extends Component {
                         />
                     }
                 />
-                {!!this.state.validateUser && (
-                    <Text style={styles.errorRequired}>{this.state.validateUser}</Text>
-                )}
+                { this.isFieldInError('usuario') && this.getErrorsInField('usuario').map((errorMessage, index) => <Text key={index} style={styles.errorRequired}>{ formValidation.required}</Text>) }
                 <Input
-                    placeholder='CONTRASEÑA'
+                    ref = 'contrasena'
+                    placeholder='Contraseña'
                     secureTextEntry={true}
                     onChangeText={(contrasena) => this.setState({ contrasena })}
                     rightIcon={
@@ -82,9 +78,7 @@ export default class Login extends Component {
                         />
                     }
                 />
-                {!!this.state.validatePass && (
-                    <Text style={styles.errorRequired}>{this.state.validatePass}</Text>
-                )}
+                { this.isFieldInError('contrasena') && this.getErrorsInField('contrasena').map((errorMessage, index) => <Text key={index} style={styles.errorRequired}>{formValidation.required}</Text>) }
                 <View style={styles.viewButton}>
                     <Button
                         icon={
@@ -95,11 +89,11 @@ export default class Login extends Component {
                             />
                         }
                         raised
-                        type="outline"
+                        type="clear"
                         titleStyle={{ color: '#000000' }}
                         buttonStyle={styles.boton}
                         onPress={() => this.ingresar()}
-                        title='INGRESA' />
+                        title='Ingresa' />
 
                 </View>
                 <View style={styles.viewButton}>
@@ -113,10 +107,10 @@ export default class Login extends Component {
                         }
                         onPress={() => this.props.navigation.navigate('Regístrate')}
                         raised
-                        type="outline"
+                        type="clear"
                         titleStyle={{ color: '#000000' }}
                         buttonStyle={styles.boton}
-                        title='REGÍSTRATE' />
+                        title='Regístrate' />
                 </View>
 
             </View>
@@ -137,13 +131,22 @@ const styles = StyleSheet.create({
     },
     boton: {
         borderColor: '#000000',
-        backgroundColor: '#E4F1FE',
+        borderBottomWidth: 1,
+        borderTopWidth: 1,
+        borderRightWidth: 1,
+        borderLeftWidth: 1,
+        backgroundColor: 'transparent',
         height: 35,
-        width: 200
+        width: 150
     },
     viewButton: {
         alignItems: 'center',
+        backgroundColor: 'transparent',
         marginTop: 10
     }
 });
+
+const formValidation = {
+    required: 'El campo es requerido!'
+}
 

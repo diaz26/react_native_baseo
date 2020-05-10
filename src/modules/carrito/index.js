@@ -1,51 +1,55 @@
 import React, { Component } from 'react';
 import { StyleSheet, View, Text, ScrollView, FlatList} from 'react-native';
-import { products, searchProduct } from "../productos/service";
-import { Button, Input, Icon, Image, SearchBar } from 'react-native-elements';
+import { Button, Image } from 'react-native-elements';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import BackgrounImageBaseo from "../general/backgrounImageBaseo";
 
 export default class Carrito extends Component {
     constructor(props) {
         super(props);
         this.state = {
             refresh: false,
-            total: 0,
-            carrito: [],
+            itemTemp: null,
+            total: (this.props.route.params !== undefined && this.props.route.params.data !== undefined) ? this.props.route.params.data.costo : 0,
+            carrito: (this.props.route.params !== undefined && this.props.route.params.data !== undefined) ? [{
+                ...this.props.route.params.data, cantidad: 1, valor: this.props.route.params.data.costo }]: [],
             loading: false,
-            productos: [],
-            productosIniciales: [],
         }
     }
 
-    async componentDidMount() {
-        const data = await products();
-        await this.setState({
-            productos: (data === undefined) ? [] : data,
-            productosIniciales: (data === undefined) ? [] : data
-        })
-        await this.state.productos.forEach(producto => {
-            producto.cantidad = 1
-            producto.valor = producto.costo
-        });
-        this.calcularTotal()
+    async componentDidUpdate(prevProps, prevState) {
+        if (prevProps.route.params !== this.props.route.params) {
+            if (this.props.route.params.data !== undefined) {
+
+                /** BUSCAR SI YA EXISTE EL REGISTRO */
+                let result = this.state.carrito.find((e) => e.code == this.props.route.params.data.code)
+                if (result === undefined || result === null) {
+                    await this.agregar(this.props.route.params.data)
+                }
+            }
+        }
+        
     }
 
     async agregar(item) {
-        let encuentra = false
-        await this.state.productos.forEach(producto => {
-            if (producto.id == item.id) {
-                encuentra = true
-                producto.cantidad ++
-                producto.valor = producto.costo * producto.cantidad
-            }
-        });
-        if (! encuentra) {
-            let carritoTemporal = this.state.productos
+        let result = this.state.carrito.find((prod) => prod.id == item.id )
+        if (result !== undefined && result !== null) {
+            await this.state.carrito.forEach(producto => {
+                if (producto.id == item.id) {
+                    producto.cantidad ++
+                    producto.code = item.code
+                    producto.valor = producto.costo * producto.cantidad
+                }
+            });
+        } else {
+            let carritoTemporal = this.state.carrito
             item.cantidad = 1
+            item.agregar = false
             item.valor = item.costo
             carritoTemporal.push(item)
             await this.setState({ productos: carritoTemporal })
         }
+
         this.calcularTotal()
         this.setState({ 
             refresh: !this.state.refresh
@@ -53,27 +57,26 @@ export default class Carrito extends Component {
     }
 
     async restar(item) {
-        let result = this.state.productos.find((prod) => prod.id = item.id )
+        let result = this.state.carrito.find((prod) => prod.id == item.id )
         if (result !== null && result.cantidad == 1) {
-            console.log('si', result)
-            let carritoTemporal = this.state.productos
-            this.setState({productos: []})
-
-            await carritoTemporal.forEach(e => {
+            let nuevosCarrito = [];
+            await this.state.carrito.forEach(e => {
                 if (e.id != item.id) {
-                    this.state.productos.push(e)
+                    nuevosCarrito.push(e)
                 }
             });
+            await this.setState({
+                carrito: nuevosCarrito
+            })
+
         } else {
-            console.log('no')
-            this.state.productos.forEach(e => {
+            await this.state.carrito.forEach(e => {
                 if (e.id == item.id) {
                     e.cantidad --
                     e.valor = e.costo * e.cantidad
                 }
             });
         }
-        console.log(this.state.productos)
         this.setState({ 
             refresh: !this.state.refresh
         })
@@ -82,80 +85,102 @@ export default class Carrito extends Component {
 
     async calcularTotal() {
         this.setState({total: 0})
-        await this.state.productos.forEach(producto => {
-            this.setState({ total: this.state.total + producto.valor })
+        let totalTem = 0;
+        await this.state.carrito.forEach(producto => {
+            totalTem += producto.valor;
         });
+        this.setState({ total: totalTem })
     }
 
     render() {
         return (
-            <ScrollView style={styles.scroll}>
-                <View style={{ flex:1, alignItems: "center", marginBottom:10, marginTop:10 }}>
-                    <Text style={{ fontSize: 20 }}> { `Total: $ ${this.state.total}` } </Text>
-                </View>
-
-                <View style={{ flex: 1, flexDirection:"row", marginBottom:10, marginTop:10 }}>
-                    <View style={{ flex: 3, alignItems:"center" }}>
-                        <Text style={ styles.bold }>Producto</Text>
-                    </View>
-                    <View style={{ flex: 2, alignItems:"center" }}>
-                        <Text style={ styles.bold }>Valor</Text>
-                    </View>
-                    <View style={{ flex: 2, alignItems:"flex-start" }}>
-                        <Text style={ styles.bold }>Cantidad</Text>
-                    </View>
-                </View>
-                <FlatList
-                    extraData={this.state.refresh}
-                    data={this.state.productos}
-                    renderItem = { ({item}) => (
-                        <View style={styles.item}>
-                            <View style={{ height:'40px', width:'40px', flex:1 }}>
-                                <Image
-                                    source={require('../../../assets/' + item.imagen )}
-                                    style={{ width: 40, height: 40 }}
-                                />
+            <View style={styles.mainView}>
+                <BackgrounImageBaseo />
+                    <View>
+                        <Text style={{ fontSize: 16, alignSelf:"center", marginTop:10, marginBottom:10 }}> { `TOTAL: $ ${this.state.total}` } </Text>
+                        <View style={{ flex:1, flexDirection:"row", borderTopWidth:2, borderColor:"#fff", paddingTop:5, borderBottomWidth: 2, paddingBottom:5 }}>
+                            <View style={{ flex: 3, alignItems:"center" }}>
+                                <Text style={ styles.bold }>PRODUCTO</Text>
                             </View>
-                            <View style={{ flex: 2, alignItems:"center" , justifyContent: "center"}}>
-                                <Text style={styles.title, styles.title}>{item.nombre}</Text>
+                            <View style={{ flex: 2, alignItems:"center" }}>
+                                <Text style={ styles.bold }>VALOR</Text>
                             </View>
-                            <View style={{ flex: 2, alignItems:"center" , justifyContent: "center"}}>
-                                <Text style={styles.title}>{`$ ${item.valor}`}</Text>
-                            </View>
-                            <View style={{ flex:2, flexDirection:'row-reverse' }}>
-                                <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
-                                    <Button
-                                        icon={
-                                            <MaterialCommunityIcons name="plus" color={"green"} size={20} onPress={ async() => { this.agregar(item) } } />
-                                        }
-                                        type="clear"
-                                    />
-                                </View>
-                                <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
-                                    <Text style={{ fontSize:18 }}> { item.cantidad } </Text>
-                                </View>
-                                <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
-                                    <Button
-                                        icon={
-                                            <MaterialCommunityIcons name="minus" color={"red"} size={20} onPress={ async() => { this.restar(item) } } />
-                                        }
-                                        type="clear"
-                                    />
-                                </View>
+                            <View style={{ flex: 2, alignItems:"flex-start" }}>
+                                <Text style={ styles.bold }>CANTIDAD</Text>
                             </View>
                         </View>
-                    )}
-                    keyExtractor={item => String(item.id)}
-                />
-            </ScrollView>
+                    </View>
+                    
+                <ScrollView style={styles.scroll}>
+                    <FlatList
+                        extraData={this.state.refresh}
+                        data={this.state.carrito}
+                        renderItem = { ({item}) => (
+                            <View style={styles.item}>
+                                <View style={{ height:'40px', width:'40px', flex:1 }}>
+                                    <Image
+                                        source={require('../../../assets/' + item.imagen )}
+                                        style={{ width: 40, height: 40 }}
+                                    />
+                                </View>
+                                <View style={{ flex: 2, alignItems:"center" , justifyContent: "center"}}>
+                                    <Text style={styles.title, styles.title}>{item.nombre}</Text>
+                                </View>
+                                <View style={{ flex: 2, alignItems:"center" , justifyContent: "center"}}>
+                                    <Text style={styles.title}>{`$ ${item.valor}`}</Text>
+                                </View>
+                                <View style={{ flex:2, flexDirection:'row-reverse' }}>
+                                    <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
+                                        <Button
+                                            icon={
+                                                <MaterialCommunityIcons name="plus" color={"green"} size={20} onPress={ async() => { this.agregar(item) } } />
+                                            }
+                                            type="clear"
+                                        />
+                                    </View>
+                                    <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
+                                        <Text style={{ fontSize:18 }}> { item.cantidad } </Text>
+                                    </View>
+                                    <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
+                                        <Button
+                                            icon={
+                                                <MaterialCommunityIcons name="minus" color={"red"} size={20} onPress={ async() => { this.restar(item) } } />
+                                            }
+                                            type="clear"
+                                        />
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+                        keyExtractor={item => String(item.id)}
+                    />
+                </ScrollView>
+                {this.state.total > 0 && 
+                    <View style={{ position:"absolute", right:8, bottom:15 }}>
+                        <Button
+                            buttonStyle={{ backgroundColor:'#fff', borderRadius: '50%' }}
+                            onPress={() => this.props.navigation.navigate('PedidoActual', {
+                                total: this.state.total,
+                                productos: this.state.carrito
+                            })}
+                            icon={
+                                <MaterialCommunityIcons name="cash-multiple" color={"#A4D2FF"} size={25} />
+                            }
+                            titleStyle={{ color:'#A4D2FF', fontSize:11 }}
+                            title=" PAGAR"
+                            type="solid"
+                        />
+                    
+                    </View>
+                }
+            </View>
         );
     }
 }
 
 const styles = StyleSheet.create({
     scroll: {
-        flex: 1,
-        backgroundColor: '#E4F1FE'
+        backgroundColor: 'transparent',
     },
     container: {
         flex: 1,
@@ -172,8 +197,13 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     bold: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight:"bold"
+    },
+    mainView: {
+        flex: 1,
+        position: 'relative',
+        backgroundColor: '#E4F1FE',
     }
 });
 

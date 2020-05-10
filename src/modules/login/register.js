@@ -56,7 +56,7 @@ export default class Register extends Component {
             }
             const resp = await agregarUsuario(data);
             if (resp.status == 'success') {
-                this.props.navigation.navigate('Inicio')
+                this.props.navigation.push('Inicio')
             } else {
                 await this.setState({ respuesta: resp, openModal: true, contrasena: null })
             }
@@ -138,7 +138,7 @@ export default class Register extends Component {
                             if (value != "0")
                                 this.setState({ genero_id: value })
                         }}
-                    >
+                        >
                         <Picker.Item label="SELECCIONE EL GÉNERO" value="0" />
                         {generosItems}
                     </Picker>

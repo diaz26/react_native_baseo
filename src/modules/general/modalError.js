@@ -7,28 +7,28 @@ export default class ModalError extends Component {
         return (
             <View style={styles.content}>
                 <View style={styles.viewModal}>
-                <Modal
-                    style={ styles.modal }
-                    animationType="slide"
-                    transparent={true}
-                >
-                    <Text style={styles.modalText}> { this.props.msg } </Text>
-                    <Button
-                        icon={
-                            <Icon
-                                name="cancel"
-                                size={80}
-                                color="red"
-                            />
-                        }
-                        type="clear"
-                        onPress={() => {
-                            this.props.closeModal(false)
-                        }}
-                    />
-                </Modal>
+                    <Modal
+                        style={ styles.modal }
+                        animationType="slide"
+                        transparent={true}
+                    >
+                        <Text style={styles.modalText}> { this.props.msg } </Text>
+                        <Button
+                            icon={
+                                <Icon
+                                    name="cancel"
+                                    size={80}
+                                    color="red"
+                                />
+                            }
+                            type="clear"
+                            onPress={() => {
+                                this.props.closeModal(false)
+                            }}
+                        />
+                    </Modal>
+                </View>
             </View>
-        </View>
         );
 
     }

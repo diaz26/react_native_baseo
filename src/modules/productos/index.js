@@ -39,7 +39,6 @@ export default class Productos extends Component {
     };
 
     render() {
-        let DATA = this.state.productos
         return (
             <ScrollView style={styles.scroll}>
                 <SearchBar
@@ -51,8 +50,41 @@ export default class Productos extends Component {
                     value={this.state.search}
                 />
                 <FlatList
-                    data={DATA}
-                    renderItem={({ item }) => <Item item={item} />}
+                    data={this.state.productos}
+                    renderItem={({ item }) => 
+                    <View style={styles.item}>
+                        <View style={{ height:'40px', width:'40px', flex:1 }}>
+                            <Image
+                                source={require('../../../assets/' + item.imagen )}
+                                style={{ width: 40, height: 40 }}
+                            />
+                        </View>
+                        <View style={{ flex: 2, alignItems:'center', justifyContent:"center" }}>
+                            <Text style={styles.title}>{item.nombre}</Text>
+                        </View>
+                        <View style={{ flex: 2, alignItems:'center', justifyContent:"center" }}>
+                            <Text style={styles.title}>{`$ ${item.costo}`}</Text>
+                        </View>
+                        <View style={{ flex:2, flexDirection:'row-reverse' }}>
+                            <View style={{ flex:1 }}>
+                                <Button
+                                    icon={
+                                        <MaterialCommunityIcons name="cart" color={"#000"} size={20} />
+                                    }
+                                    type="clear"
+                                />
+                            </View>
+                            <View style={{ flex:1 }}>
+                                <Button
+                                    icon={
+                                        <MaterialCommunityIcons name="eye" color={"#000"} size={20} />
+                                    }
+                                    type="clear"
+                                />
+                            </View>
+                        </View>
+                    </View>
+                    }
                     keyExtractor={item => String(item.id)}
                 />
             </ScrollView>
@@ -80,42 +112,3 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
 });
-
-function Item({ item }) {
-    return (
-        
-        <View style={styles.item}>
-            <View style={{ height:'40px', width:'40px', flex:1 }}>
-                <Image
-                    source={require('../../../assets/' + item.imagen )}
-                    style={{ width: 40, height: 40 }}
-                />
-            </View>
-            <View style={{ flex: 2, alignItems:'center', justifyContent:"center" }}>
-                <Text style={styles.title}>{item.nombre}</Text>
-            </View>
-            <View style={{ flex: 2, alignItems:'center', justifyContent:"center" }}>
-                <Text style={styles.title}>{`$ ${item.costo}`}</Text>
-            </View>
-            <View style={{ flex:2, flexDirection:'row-reverse' }}>
-                <View style={{ flex:1 }}>
-                    <Button
-                        icon={
-                            <MaterialCommunityIcons name="cart" color={"#000"} size={20} />
-                        }
-                        type="clear"
-                    />
-                </View>
-                <View style={{ flex:1 }}>
-                    <Button
-                        icon={
-                            <MaterialCommunityIcons name="eye" color={"#000"} size={20} />
-                        }
-                        type="clear"
-                    />
-                </View>
-            </View>
-        </View>
-    );
-  }
-
